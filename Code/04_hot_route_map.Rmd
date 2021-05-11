@@ -1,0 +1,67 @@
+---
+title: "04_sjoin_points_lines"
+author: "Iain Agar"
+date: "11/05/2021"
+output: html_document
+---
+
+## Create a spatial/simple features file
+
+```{r}
+
+# create simple features spatial data and include projected coordinates
+bpd_violenceSF <- st_transform(st_as_sf(bpd_violence, coords = c("Longitude", "Latitude"), crs=4326), crs = 6487)
+
+# create a buffer area around the street segments, this example is 10m using projected coordinates
+# note that lat/lon degrees have been set as coordinate reference (4326), this is same crs as the crime point data
+br_crime_buff <- st_transform(st_buffer(bpd_violenceSF, 10), crs = 4326)
+
+```
+
+## Join points to lines
+
+```{r}
+
+# intersect street segments intersecting buffered crime points
+bpd_vio_seg_sf <- st_join(baltimore_roads, br_crime_buff, join = st_intersects)
+
+#create table grouped by osm_id for crime counts, using Homicide only in this example
+counts_by_seg <- bpd_vio_seg_sf %>%
+  filter(!is.na(Neighborhood)) %>%
+  filter(Description == "HOMICIDE") %>%
+  group_by(osm_id, name, highway, length) %>%
+  count()
+
+#arbitrarily choosing counts of street segments with more than 1 homicide
+counts_by_seg2 <- counts_by_seg %>%
+  filter(n > 1)
+
+```
+
+## Map data
+
+```{r}
+
+summary(counts_by_seg2$n)
+
+# set colour palette
+pal <- colorNumeric(
+  palette = brewer.pal(3, "Reds"),
+  domain = c(0, 5, 9))
+
+# create leaflet map
+b_hr_map <- leaflet() %>%
+  addTiles() %>%
+  addProviderTiles("CartoDB.DarkMatter") %>%
+  addPolylines(
+    data = counts_by_seg2,
+    col = pal(counts_by_seg2$n),
+    opacity = 1) %>%
+  addLegend(pal = pal, values = counts_by_seg2$n, title = "Homicide", position = "bottomleft") 
+
+# save leaflet map as html
+saveWidget(b_hr_map, file="b_hr_map.html")
+
+```
+
+
