@@ -1,0 +1,27 @@
+---
+title: "01_packages"
+author: "Iain Agar"
+date: "11/05/2021"
+output: html_document
+---
+
+# Packages
+
+Packages required for this project
+
+```{r setup, include=FALSE}
+# osm for retrieving open street map roads polylines
+if(!require("osmdata")) install.packages("osmdata")
+# spatial features
+if(!require("sf")) install.packages("sf")
+# spatial data
+if(!require("sp")) install.packages("sp")
+# GIS Tools
+if(!require("GISTools")) install.packages("GISTools")
+# nice interactive maps
+if(!require("leaflet")) install.packages("leaflet")
+# data wrangling
+if(!require("tidyverse")) install.packages("tidyverse")
+
+```
+

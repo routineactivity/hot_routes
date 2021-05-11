@@ -1,0 +1,84 @@
+---
+title: "02_street_segments"
+author: "Iain Agar"
+date: "11/05/2021"
+output: html_document
+---
+
+# Create a street segments map using features from OSM
+
+OSM features available for geospatial analysis can be viewed here https://wiki.openstreetmap.org/wiki/Map_features
+
+We can see which features are available, the index url above for osm identifies that we can find road data under the categories of highway.
+
+Results show the various features contained within highway. Of interest for our crime by street segments, or hot routes, we are most likely interested in:
+
+* primary
+* secondary
+* tertiary
+* residential
+* track
+* motorway
+* trunk
+
+```{r}
+
+# see which sub-categories fall within the highway features
+available_tags("highway")
+
+```
+
+## Creating a bounding box for your study area
+
+For this example I am using the city of Baltimore, Maryland, US.
+
+```{r}
+
+bbox_1 <- getbb("Baltimore") %>%
+  # get bounding box of Baltimore
+  opq() %>%
+  # add feature
+  add_osm_feature("highway")
+
+# check out the structure
+str(bbox_1)
+
+```
+
+## Create a street segment simple feature
+
+We want a polyline of the street network in Baltimore.
+
+```{r}
+
+# create a simple features object from bbox_1
+b_md_roads <- osmdata_sf(bbox_1)
+
+# see object classes, will show a simple features collection by number of points, lines, polygons etc
+class(b_md_roads)
+
+# we want the polylines
+b_md_roadsPL <- b_md_roads$osm_lines
+
+```
+
+## Data cleaning
+
+The osm datasets are very wide, but we are only interested in a small number of columns for this process:
+
+* osm_id
+* name
+* highway
+* geometry
+
+```{r}
+
+# subset data
+br <- b_md_roadsPL[,c("osm_id", "name", "highway", "geometry")]
+
+# add length of segments
+br$length <- as.numeric(st_length(br$geometry))
+
+# subset the highway features of interest
+baltimore_roads <- subset(br, highway=="motorway" | highway=="primary" | highway=="residential" | highway=="secondary" | highway=="tertiary" | highway=="track" | highway=="trunk")
+```
