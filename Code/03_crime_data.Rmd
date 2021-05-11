@@ -1,0 +1,40 @@
+---
+title: "03_crime_data"
+author: "Iain Agar"
+date: "11/05/2021"
+output: html_document
+---
+
+# Import the Baltimore PD crime data
+
+We are using BPD Part 1 crime data which is available open source via url.
+
+## Read in and filter data
+
+```{r}
+
+# import data from url
+bpd <- read.csv(url("https://opendata.arcgis.com/datasets/3eeb0a2cbae94b3e8549a8193717a9e1_0.csv?outSR=%7B%22latestWkid%22%3A2248%2C%22wkid%22%3A102685%7D"))
+
+# extract date from the datetime column
+bpd$date <- as.Date(substr(bpd$CrimeDateTime,1,10))
+
+# filter group of serious violent crimes since 2018
+bpd_violence <- bpd %>%
+  filter(Description =="AGG. ASSAULT" | Description =="HOMICIDE" | Description =="SHOOTING") %>%
+  filter(date >"2018-02-28")
+
+```
+
+## Saving data
+
+Saving the filtered sample of data.
+
+```{r}
+
+save(bpd_violence, file = "data_bpd_sample.RData")
+
+# load("data_bpd_sample.RData") if opendata link changes
+
+```
+
